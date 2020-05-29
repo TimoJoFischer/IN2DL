@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="PublishConfigData" autoUpload="Always" serverName="fischer@lxhalle.in.tum.de:22">
+    <serverData>
+      <paths name="fischer@lxhalle.in.tum.de:22">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/u/halle/fischer/home_at/Pycharm/IN2DL" local="$PROJECT_DIR$" />
+          </mappings>
+        </serverdata>
+      </paths>
+    </serverData>
+    <option name="myAutoUpload" value="ALWAYS" />
+  </component>
+</project>
