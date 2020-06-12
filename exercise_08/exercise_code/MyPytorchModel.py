@@ -33,8 +33,13 @@ class MyPytorchModel(pl.LightningModule):
             nn.BatchNorm1d(self.hparams["n_hidden_3"]),
             nn.Dropout(self.hparams["p_dropout"]),
             nn.ReLU(),
-            nn.Linear(self.hparams["n_hidden_3"], num_classes)
+            nn.Linear(self.hparams["n_hidden_3"], self.hparams["n_hidden_4"]),
+            nn.BatchNorm1d(self.hparams["n_hidden_4"]),
+            nn.Dropout(self.hparams["p_dropout"]),
+            nn.ReLU(),
+            nn.Linear(self.hparams["n_hidden_4"], num_classes)
         )
+
 
         ########################################################################
         #                           END OF YOUR CODE                           #
@@ -105,8 +110,9 @@ class MyPytorchModel(pl.LightningModule):
         # If you want, you can also perform data augmentation!                 #
         ########################################################################
         my_transform = transforms.Compose([
+            transforms.RandomCrop((30, 30)),
+            transforms.Resize((32, 32)),
             transforms.RandomHorizontalFlip(p=0.9),
-            transforms.RandomAffine(degrees=(0, 5), translate=(0.1, 0.3)),
             transforms.ColorJitter(brightness=0.3, contrast=0.6, saturation=0.5),
             transforms.ToTensor(),
             transforms.Normalize((0.485, 0.456, 0.406,), (0.229, 0.224, 0.225,), inplace=False)
