@@ -56,9 +56,14 @@ def batchnorm_forward(x, gamma, beta, bn_param):
         # statistics to normalize the incoming data, and scale and shift the        #
         # normalized data using gamma and beta.                                     #
         #############################################################################
-         
-        pass
-        
+        sample_mean=np.mean(x,axis=0)
+        sample_var=np.var(x,axis=0)
+        running_mean = momentum * running_mean + (1 - momentum) * sample_mean
+        running_var = momentum * running_var + (1 - momentum) * sample_var
+        x_stan=(x-sample_mean)/np.sqrt(sample_var+eps)
+        out=gamma*x_stan+beta
+
+        cache={'epsilon':eps,'N':N,'x':x,'mu':sample_mean,'var':sample_var,'x_stan':x_stan,'gamma':gamma}
         #############################################################################
         #                             END OF CODE                                   #
         #############################################################################
@@ -66,9 +71,8 @@ def batchnorm_forward(x, gamma, beta, bn_param):
         #############################################################################
         # TODO: Look at the test-time forward pass for batch normalization.         #
         #############################################################################
-
-        pass
-        
+        x_stan = (x - running_mean) / np.sqrt(running_var + eps)
+        out = gamma * x_stan + beta
         #############################################################################
         #                             END OF YOUR CODE                              #
         #############################################################################
@@ -105,40 +109,23 @@ def batchnorm_backward(dout, cache):
     # results in the dx, dgamma, and dbeta variables.                           #
     #############################################################################
 
-    pass
-    
-    #############################################################################
-    #                             END OF YOUR CODE                              #
-    #############################################################################
 
-    return dx, dgamma, dbeta
+    epsilon=cache['epsilon']
+    N=cache['N']
+    x=cache['x']
+    mu=cache['mu']
+    var=cache['var']
+    sigma = np.sqrt(var)
+    gamma=cache['gamma']
+    x_stan=cache['x_stan']
 
 
-def batchnorm_backward_alt(dout, cache):
-    """
-    Alternative backward pass for batch normalization.
-
-    For this implementation you should work out the derivatives for the batch
-    normalizaton backward pass on paper and simplify as much as possible. You
-    should be able to derive a simple expression for the backward pass.
-
-    Note: This implementation should expect to receive the same cache variable
-    as batchnorm_backward, but might not use all of the values in the cache.
-
-    Inputs / outputs: Same as batchnorm_backward
-    """
-    dx, dgamma, dbeta = None, None, None
-    #############################################################################
-    # TODO: Implement the backward pass for batch normalization. Store the      #
-    # results in the dx, dgamma, and dbeta variables.                           #
-    #                                                                           #
-    # After computing the gradient with respect to the centered inputs, you     #
-    # should be able to compute gradients with respect to the inputs in a       #
-    # single statement; our implementation fits on a single 80-character line.  #
-    #############################################################################
-    
-    pass
-    
+    dl_dx_stan=dout*gamma
+    dl_dsig2= (-0.5*dl_dx_stan*(x-mu)*np.power(var+epsilon,-1.5)).sum(axis=0)
+    dl_du = (-dl_dx_stan/np.sqrt(var+epsilon)).sum(axis=0)+dl_dsig2*(-2*(x-mu)).sum(axis=0)/N
+    dx=dl_dx_stan*1/np.sqrt(var+epsilon) + dl_dsig2*2*(x-mu)/N + dl_du/N
+    dgamma=(x_stan*dout).sum(axis=0)
+    dbeta=dout.sum(axis=0)
     #############################################################################
     #                             END OF YOUR CODE                              #
     #############################################################################
@@ -177,7 +164,10 @@ def dropout_forward(x, dropout_param):
         # TODO: Implement the training phase forward pass for inverted dropout.   #
         # Store the dropout mask in the mask variable.                            #
         ###########################################################################
-        pass
+        prob = np.random.rand(x.shape[0],x.shape[1])
+        mask = np.where(prob<=p,0.,1.)
+        out = x*mask
+
         ###########################################################################
         #                            END OF YOUR CODE                             #
         ###########################################################################
@@ -185,7 +175,7 @@ def dropout_forward(x, dropout_param):
         ###########################################################################
         # TODO: Implement the test phase forward pass for inverted dropout.       #
         ###########################################################################
-        pass
+        out=x
         ###########################################################################
         #                            END OF YOUR CODE                             #
         ###########################################################################
@@ -212,7 +202,7 @@ def dropout_backward(dout, cache):
         ###########################################################################
         # TODO: Implement the training phase backward pass for inverted dropout.  #
         ###########################################################################
-        pass
+        dx=dout*mask
         ###########################################################################
         #                            END OF YOUR CODE                             #
         ###########################################################################
