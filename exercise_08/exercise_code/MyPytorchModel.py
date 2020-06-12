@@ -20,8 +20,21 @@ class MyPytorchModel(pl.LightningModule):
         # TODO: Initialize your model!                                         #
         ########################################################################
 
-
-        pass
+        self.model = nn.Sequential(
+            nn.Linear(input_size, self.hparams["n_hidden_1"]),
+            nn.BatchNorm1d(self.hparams["n_hidden_1"]),
+            nn.Dropout(self.hparams["p_dropout"]),
+            nn.ReLU(),
+            nn.Linear(self.hparams["n_hidden_1"], self.hparams["n_hidden_2"]),
+            nn.BatchNorm1d(self.hparams["n_hidden_2"]),
+            nn.Dropout(self.hparams["p_dropout"]),
+            nn.ReLU(),
+            nn.Linear(self.hparams["n_hidden_2"], self.hparams["n_hidden_3"]),
+            nn.BatchNorm1d(self.hparams["n_hidden_3"]),
+            nn.Dropout(self.hparams["p_dropout"]),
+            nn.ReLU(),
+            nn.Linear(self.hparams["n_hidden_3"], num_classes)
+        )
 
         ########################################################################
         #                           END OF YOUR CODE                           #
@@ -79,7 +92,7 @@ class MyPytorchModel(pl.LightningModule):
     def validation_end(self, outputs):
         avg_loss, acc = self.general_end(outputs, "val")
         #print("Val-Acc={}".format(acc))
-        tensorboard_logs = {'val_loss': avg_loss}
+        tensorboard_logs = {'val_loss': avg_loss,'val_acc':acc}
         return {'val_loss': avg_loss, 'val_acc': acc, 'log': tensorboard_logs}
 
     def prepare_data(self):
@@ -91,8 +104,13 @@ class MyPytorchModel(pl.LightningModule):
         # TODO: Define your transforms (convert to tensors, normalize).        #
         # If you want, you can also perform data augmentation!                 #
         ########################################################################
-
-        pass
+        my_transform = transforms.Compose([
+            transforms.RandomHorizontalFlip(p=0.9),
+            transforms.RandomAffine(degrees=(0, 5), translate=(0.1, 0.3)),
+            transforms.ColorJitter(brightness=0.3, contrast=0.6, saturation=0.5),
+            transforms.ToTensor(),
+            transforms.Normalize((0.485, 0.456, 0.406,), (0.229, 0.224, 0.225,), inplace=False)
+        ])
 
         ########################################################################
         #                           END OF YOUR CODE                           #
@@ -127,8 +145,7 @@ class MyPytorchModel(pl.LightningModule):
         # TODO: Define your optimizer.                                         #
         ########################################################################
 
-
-        pass
+        optim = torch.optim.Adam(self.parameters(),lr=self.hparams['lr'])
 
         ########################################################################
         #                           END OF YOUR CODE                           #
