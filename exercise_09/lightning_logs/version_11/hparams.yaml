@@ -1,0 +1,3 @@
+batch_size: 128
+input_size: 9216
+lr: 0.01
