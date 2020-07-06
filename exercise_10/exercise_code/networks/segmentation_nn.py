@@ -20,12 +20,19 @@ class SegmentationNN(pl.LightningModule):
             nn.ReLU(),
             nn.Conv2d(37, 111, 3),
             nn.ReLU(),
-            nn.ConvTranspose2d(111, 37, 3),
+            nn.ConvTranspose2d(111, 70, 3),
             nn.ReLU(),
-            nn.ConvTranspose2d(37, 30, 3),
+            nn.ConvTranspose2d(70, 60, 3),
             nn.ReLU(),
-            nn.ConvTranspose2d(30, 23, 3)
+            nn.ConvTranspose2d(60, 50, 3),
+            nn.ReLU(),
+            nn.Conv2d(50,30,1),
+            nn.ReLU(),
+            nn.Conv2d(30,23,1)
         )
+
+        self.loss_func = torch.nn.CrossEntropyLoss(ignore_index=-1, reduction='mean')
+
         #######################################################################
         #                           END OF YOUR CODE                          #
         #######################################################################
@@ -50,12 +57,7 @@ class SegmentationNN(pl.LightningModule):
     def general_step(self, batch, batch_idx, type):
         images, targets = batch
         outs = self.forward(images)
-        loss_func = torch.nn.CrossEntropyLoss(ignore_index=-1, reduction='mean')
-        loss = torch.tensor([0.0])
-        for i in range(len(batch)):
-            out = outs[i]
-            target = targets[i]
-            loss += loss_func(out.unsqueeze(0), target.unsqueeze(0))
+        loss = self.loss_func(outs, targets)
         return loss
 
     def training_step(self, batch, batch_idx):
@@ -63,10 +65,15 @@ class SegmentationNN(pl.LightningModule):
         tensorboard_logs = {'train_loss': loss}
         return {'loss': loss, 'log': tensorboard_logs}
 
-    def validation_step(self, batch, batch_idx):
-        loss = self.general_step(batch, batch_idx, "val")
-        tensorboard_logs = {'val_loss': loss}
-        return {'val_loss': loss, 'log': tensorboard_logs}
+    def validation_step(self,batch,batch_idx):
+        loss= self.general_step(batch,batch_idx,"val")
+        return {'val_loss':loss}
+
+    def validation_end(self, outputs):
+        # average over all batches aggregated during one epoch
+        avg_loss = torch.stack([x['val_loss'] for x in outputs]).mean()
+        tensorboard_logs = {'val_loss': avg_loss}
+        return {'val_loss': avg_loss, 'log': tensorboard_logs}
 
     def test_step(self, batch, batch_idx):
         loss = self.general_step(batch, batch_idx, "test")
@@ -87,7 +94,7 @@ class SegmentationNN(pl.LightningModule):
     @pl.data_loader
     def train_dataloader(self):
         return DataLoader(self.dataset["train"], batch_size=self.hparams["batch_size"])
-30
+
     @pl.data_loader
     def val_dataloader(self):
         return DataLoader(self.dataset["val"], batch_size=self.hparams["batch_size"])
