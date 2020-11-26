@@ -20,15 +20,15 @@ class SegmentationNN(pl.LightningModule):
             nn.ReLU(),
             nn.Conv2d(37, 111, 3),
             nn.ReLU(),
-            nn.ConvTranspose2d(111, 70, 3),
+            nn.ConvTranspose2d(111, 80, 3),
+            nn.ReLU(),
+            nn.ConvTranspose2d(80, 70, 3),
             nn.ReLU(),
             nn.ConvTranspose2d(70, 60, 3),
             nn.ReLU(),
-            nn.ConvTranspose2d(60, 50, 3),
+            nn.Conv2d(60,40,1),
             nn.ReLU(),
-            nn.Conv2d(50,30,1),
-            nn.ReLU(),
-            nn.Conv2d(30,23,1)
+            nn.Conv2d(40,23,1)
         )
 
         self.loss_func = torch.nn.CrossEntropyLoss(ignore_index=-1, reduction='mean')
